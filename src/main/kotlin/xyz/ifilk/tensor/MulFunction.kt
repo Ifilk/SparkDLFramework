@@ -1,5 +1,7 @@
 package xyz.ifilk.tensor
 
+import xyz.ifilk.utils.haveSameShape
+
 class MulFunction: TensorFunction() {
     companion object {
         fun apply(a: Tensor, b: Tensor): Tensor {
@@ -14,16 +16,14 @@ class MulFunction: TensorFunction() {
         val a = inputs[0]
         val b = inputs[1]
         val out = a.clone()
-        require(a.shape[0] == b.shape[0] && a.shape[1] == b.shape[1]) {
+        require(haveSameShape(a, b)) {
             "Shape mismatch: ${a.shape.contentToString()} x ${b.shape.contentToString()}"
         }
-        for (i in 0 until out.data.size) {
-            out.data[i] *= b.data[i]
-        }
+        out.mul_(b)
         return out
     }
 
-    override fun backward(gradOutput: Tensor): Array<Tensor?> {
+    override fun backward(gradOutput: Tensor): Array<Tensor> {
         val a = inputs[0]
         val b = inputs[1]
         val gradA = DoubleArray(a.data.size)

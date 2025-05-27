@@ -1,6 +1,5 @@
 package xyz.ifilk.tensor
 
-import xyz.ifilk.tensor.Tensor
 import java.util.*
 
 /**
@@ -14,7 +13,7 @@ abstract class TensorFunction {
     abstract fun forward(vararg inputs: Tensor): Tensor
 
     /** Given upstream gradient, compute gradients w.r.t inputs.  */
-    abstract fun backward(gradOutput: Tensor): Array<Tensor?>
+    abstract fun backward(gradOutput: Tensor): Array<Tensor>
 
     /** Utility: attach creator info to output  */
     fun attachCreator(out: Tensor) {
