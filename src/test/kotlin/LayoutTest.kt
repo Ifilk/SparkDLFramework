@@ -1,11 +1,14 @@
 
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Test
 import xyz.ifilk.nn.DenseLayout
+import xyz.ifilk.functions.ReLU
+import xyz.ifilk.functions.Sigmoid
 import xyz.ifilk.tensor.Tensor
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-class DenseTest {
+class LayoutTest {
 
     @Test
     fun testForwardWithoutBias() {
@@ -64,10 +67,40 @@ class DenseTest {
         assertArrayEqualsWithTolerance(expectedGradInput, input.grad!!.data)
     }
 
-    private fun assertArrayEqualsWithTolerance(expected: DoubleArray, actual: DoubleArray, tolerance: Double = 1e-6) {
-        assertEquals(expected.size, actual.size, "Array size mismatch")
-        for (i in expected.indices) {
-            assertEquals(expected[i], actual[i], tolerance, "Mismatch at index $i")
-        }
+    @Test
+    fun testReLUForwardBackward() {
+        val input = Tensor(doubleArrayOf(-1.0, 0.0, 2.0, 3.0), intArrayOf(2, 2), requiresGrad = true)
+        val output = ReLU.apply(input)
+        val expectedForward = doubleArrayOf(0.0, 0.0, 2.0, 3.0)
+        assertArrayEqualsWithTolerance(expectedForward, output.data)
+
+        // 聚合成标量损失
+        val loss = output.sum()
+        loss.backward()
+
+        // 手动计算梯度，ReLU 梯度是输入 > 0 的地方为 1，否则为 0
+        val expectedGrad = doubleArrayOf(0.0, 0.0, 1.0, 1.0)
+        assertNotNull(input.grad)
+        assertArrayEqualsWithTolerance(expectedGrad, input.grad!!.data)
     }
+
+    @Test
+    fun testSigmoidForwardBackward() {
+        val input = Tensor(doubleArrayOf(0.0, 2.0, -2.0), intArrayOf(3), requiresGrad = true)
+        val output = Sigmoid.apply(input)
+        val expectedForward = input.data.map { x -> 1.0 / (1.0 + kotlin.math.exp(-x)) }.toDoubleArray()
+        assertArrayEqualsWithTolerance(expectedForward, output.data)
+
+        val loss = output.sum()
+        loss.backward()
+
+        val expectedGrad = DoubleArray(output.data.size) { i ->
+            val y = output.data[i]
+            1.0 * y * (1 - y)  // dLoss/dOutput = 1 since loss = sum(output)
+        }
+
+        assertNotNull(input.grad)
+        assertArrayEqualsWithTolerance(expectedGrad, input.grad!!.data)
+    }
+
 }
