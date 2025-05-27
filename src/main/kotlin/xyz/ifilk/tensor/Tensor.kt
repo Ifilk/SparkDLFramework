@@ -175,13 +175,11 @@ class Tensor(
         return SumFunction.apply(this)
     }
 
-
-
     /** Kick‑off backward pass (only valid on scalar outputs).  */
-    fun backward() {
+    fun backward(grad: Tensor? = null) {
         check(data.size == 1) { "backward() can only be called on scalar outputs" }
         // Seed grad with 1.0
-        this.grad = Tensor(doubleArrayOf(1.0), intArrayOf(1), false)
+        this.grad = grad ?: Tensor(doubleArrayOf(1.0), intArrayOf(1), false)
         AutogradEngine.backward(this)
     }
 
