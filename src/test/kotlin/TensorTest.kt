@@ -1,7 +1,6 @@
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import xyz.ifilk.tensor.Tensor
-import kotlin.math.abs
 
 class TensorTest {
     @Test
@@ -88,12 +87,5 @@ class TensorTest {
         assertNotNull(b.grad)
         assertArrayEqualsWithTolerance(expectedGradA, a.grad!!.data)
         assertArrayEqualsWithTolerance(expectedGradB, b.grad!!.data)
-    }
-
-    private fun assertArrayEqualsWithTolerance(expected: DoubleArray, actual: DoubleArray, tol: Double = 1e-6) {
-        assertEquals(expected.size, actual.size)
-        for (i in expected.indices) {
-            assertTrue(abs(expected[i] - actual[i]) < tol, "Mismatch at $i: expected=${expected[i]}, actual=${actual[i]}")
-        }
     }
 }
