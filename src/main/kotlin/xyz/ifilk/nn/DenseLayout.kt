@@ -8,11 +8,11 @@ class DenseLayout(
     private val inFeatures: Int,
     private val outFeatures: Int,
     private val useBias: Boolean = true
-): Module() {
+): DModule() {
+
     // 权重参数：shape = [in, out]
     val weight = Tensor(
         data = DoubleArray(inFeatures * outFeatures) {
-            // Xavier 初始化：U(−sqrt(6 / (in + out)), sqrt(6 / (in + out)))
             val bound = sqrt(6.0 / (inFeatures + outFeatures))
             Random.nextDouble(-bound, bound)
         },
@@ -29,12 +29,20 @@ class DenseLayout(
         )
     } else null
 
+    init {
+        registerParameter(weight)
+        if (useBias) {
+            registerParameter(bias!!)
+        }
+    }
+
     // 前向传播
     override fun forward(input: Tensor): Tensor {
-        var output = input.matmul(weight)
-        if (useBias) {
-            output += bias!!
+        val output = input.matmul(weight)
+        return if (useBias) {
+            output + bias!! // 需支持 broadcast，加法自动图已修正
+        } else {
+            output
         }
-        return output
     }
 }
