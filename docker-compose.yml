@@ -1,0 +1,93 @@
+services:
+  spark-master:
+    image: bitnami/spark:3.5
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_USER=spark
+    ports:
+      - "8080:8080"   # Spark UI
+      - "7077:7077"   # Spark Master RPC
+    networks:
+      - dl-net
+    restart: unless-stopped
+
+  spark-worker:
+    image: bitnami/spark:3.5
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_USER=spark
+    depends_on:
+      - spark-master
+    networks:
+      - dl-net
+    deploy:
+      replicas: 2     # 根据需要调整 Executor 数量
+      restart_policy:
+        condition: on-failure
+
+  hbase:
+    image: harisekhon/hbase:latest
+    container_name: hbase
+    ports:
+      - "16010:16010"   # HBase UI
+      - "2181:2181"     # ZooKeeper client port
+      - "2182:2182"     # ZooKeeper peer port
+      - "2183:2183"     # ZooKeeper leader election port
+    networks:
+      - dl-net
+    environment:
+      - HBASE_ZOOKEEPER_QUORUM=hbase
+    restart: unless-stopped
+  init:
+    build:
+      context: ./hbase-init
+      dockerfile: Dockerfile
+    container_name: init
+    depends_on:
+      -  hbase
+    volumes:
+      - ./hbase-init/:/opt/app
+    entrypoint: ["/bin/bash", "/opt/app/hbase-init.sh"]
+    environment:
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - HBASE_HOST=hbase
+      - HBASE_PORT=16010
+      - MNIST_TABLE=mnist_dataset
+      - ZK_HOST=hbase
+    networks:
+      - dl-net
+    restart: "no"
+  submit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: submit
+    depends_on:
+      - spark-master
+      - spark-worker
+      - hbase
+      - init
+    entrypoint: ["/bin/bash", "/opt/app/spark-submit.sh"]
+    volumes:
+      - ./:/opt/app
+    networks:
+      - dl-net
+    restart: "no"
+    environment:
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - HBASE_HOST=hbase
+      - HBASE_PORT=16010
+      - MNIST_TABLE=mnist_dataset
+      - APP_JAR=/opt/app/build/libs/app.jar
+      - MAIN_CLASS=xyz.ifilk.dataset.mnist.MNISTTrain
+      - ZK_HOST=hbase
+      - HBASE_ZOOKEEPER_QUORUM=hbase
+      - EPOCHS=10
+
+networks:
+  dl-net:
+    driver: bridge

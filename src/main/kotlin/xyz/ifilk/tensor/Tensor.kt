@@ -1,36 +1,85 @@
 package xyz.ifilk.tensor
 
 import xyz.ifilk.autograd.AutogradEngine
+import xyz.ifilk.functions.MeanFunction
+import xyz.ifilk.functions.SoftmaxFunction
 import xyz.ifilk.utils.haveSameShape
+import java.io.Serializable
+import kotlin.math.abs
+import kotlin.math.sign
+import kotlin.math.sqrt
 
 /**
  * Core Tensor data structure with minimal autograd support.
  * Note: This is a *starting skeleton* – many optimizations (broadcasting, shape inference,
  * memory layout, GPU off‑loading, etc.) can be layered on later.
  */
-class Tensor(
+open class Tensor(
     /** Flat data buffer in row‑major order.  */
-    var data: DoubleArray,
+    open var data: DoubleArray,
     /** Shape of the tensor, e.g. {2,3}.  */
-    var shape: IntArray,
+    open var shape: IntArray,
     /** Whether to track gradients.  */
-    var requiresGrad: Boolean
-) {
+    open var requiresGrad: Boolean
+): Serializable {
     /* ============== Fields ============== */
     /** Gradient accumulated during back‑prop.  */
     var grad: Tensor? = null
 
     /** Function that created this tensor (null for leaf).  */
+    @Transient
     var creator: TensorFunction? = null
 
     /** Whether this tensor is a leaf (parameters / inputs).  */
     var isLeaf: Boolean = true
 
+    var isPersistent: Boolean = false
+
     /* ============== Constructors ============== */
     constructor(data: DoubleArray, shape: IntArray) : this(data, shape, false)
 
     /** Convenience scalar constructor (leaf).  */
-    constructor(scalar: Double, requiresGrad: Boolean) : this(doubleArrayOf(scalar), intArrayOf(1), requiresGrad)
+    constructor(scalar: Double, requiresGrad: Boolean=true) : this(doubleArrayOf(scalar), intArrayOf(1), requiresGrad)
+
+    companion object {
+        fun zerosLike(tensor: Tensor): Tensor{
+            val newData = DoubleArray(tensor.data.size) { 0.0 }
+            return Tensor(newData, tensor.shape)
+        }
+
+        fun stack(tensors: List<Tensor>): Tensor {
+            require(tensors.isNotEmpty()) { "Tensor list cannot be empty" }
+
+            // 所有 tensor 形状必须一致
+            val baseShape = tensors[0].shape
+            for (t in tensors) {
+                require(t.shape.contentEquals(baseShape)) { "All tensors must have the same shape" }
+            }
+
+            val numTensors = tensors.size
+            val newShape = intArrayOf(numTensors) + baseShape
+
+            // 计算每个 tensor 中元素数目
+            val singleSize = baseShape.fold(1) { acc, dim -> acc * dim }
+
+            // 创建合并数据数组
+            val stackedData = DoubleArray(numTensors * singleSize)
+
+            for ((i, t) in tensors.withIndex()) {
+                System.arraycopy(t.data, 0, stackedData, i * singleSize, singleSize)
+            }
+
+            return Tensor(stackedData, newShape)
+        }
+
+        fun fromIntArray(ints: IntArray, shape: IntArray): Tensor {
+            require(ints.size == shape.reduce { a, b -> a * b }) {
+                "Data size (${ints.size}) does not match shape ${shape.contentToString()}"
+            }
+            val data = DoubleArray(ints.size) { i -> ints[i].toDouble() }
+            return Tensor(data, shape, requiresGrad = false)
+        }
+    }
 
     fun zeroGrad() {
         if (requiresGrad && grad != null) {
@@ -84,8 +133,36 @@ class Tensor(
         return AddFunction.apply(this, other)
     }
 
+    fun add(other: Double): Tensor {
+        return AddFunction.apply(this, other)
+    }
+
+    fun substract(other: Tensor): Tensor {
+        return SubtractFunction.apply(this, other)
+    }
+
+    fun substract(other: Double): Tensor {
+        return SubtractFunction.apply(this, other)
+    }
+
     operator fun plus(other: Tensor): Tensor {
         return this.add(other)
+    }
+
+    operator fun plus(other: Double): Tensor {
+        return this.add(other)
+    }
+
+    operator fun minus(other: Tensor): Tensor {
+        return this.substract(other)
+    }
+
+    operator fun minus(other: Double): Tensor {
+        return this.substract(other)
+    }
+
+    operator fun unaryMinus(): Tensor {
+        return NegFunction.apply(this)
     }
 
     fun add_(other: Tensor): Tensor {
@@ -97,11 +174,25 @@ class Tensor(
         return this
     }
 
+    fun add_(other: Double): Tensor {
+        for (i in data.indices)
+            data[i] += other
+        return this
+    }
+
     fun mul(other: Tensor): Tensor {
         return MulFunction.apply(this, other)
     }
 
+    fun mul(other: Double): Tensor {
+        return MulFunction.apply(this, other)
+    }
+
     operator fun times(other: Tensor): Tensor {
+        return this.mul(other)
+    }
+
+    operator fun times(other: Double): Tensor {
         return this.mul(other)
     }
 
@@ -118,22 +209,18 @@ class Tensor(
         return this
     }
 
+    fun mul_(other: Double): Tensor {
+        for (i in data.indices)
+            data[i] *= other
+        return this
+    }
+
     fun matmul(other: Tensor): Tensor {
         return MatmulFunction.apply(this, other)
     }
 
     /**
-     * In-place matrix multiplication: this ← this · other
-     *
-     * 约定：
-     *   • 允许 1-D 向量参与运算（自动晋升为行/列张量）
-     *   • 只支持 2-D/1-D 情况；更高维 batch-matmul 需另行扩展
-     *   • requiresGrad 取两输入的逻辑或
-     *
-     * 使用示例：
-     *   val a = Tensor(doubleArrayOf(1.0,2.0,3.0,4.0), intArrayOf(2,2))
-     *   val b = Tensor(doubleArrayOf(5.0,6.0,7.0,8.0), intArrayOf(2,2))
-     *   a.matmul_(b)     // a 被就地更新
+     * 只支持 2-D/1-D 情况；更高维 batch-matmul 需另行扩展
      */
     fun matmul_(other: Tensor): Tensor {
         val aShape = if (this.shape.size == 1) intArrayOf(1, this.shape[0]) else this.shape
@@ -175,7 +262,19 @@ class Tensor(
         return SumFunction.apply(this)
     }
 
-    /** Kick‑off backward pass (only valid on scalar outputs).  */
+    fun mean(axis: Int? = null): Tensor {
+        return MeanFunction.apply(this, axis)
+    }
+
+    fun pow(i: Double): Tensor {
+        return PowFunction.apply(this, i)
+    }
+
+    fun pow(i: Int): Tensor {
+        return PowFunction.apply(this, i.toDouble())
+    }
+
+    /** Kick‑off backward pass (only valid   on scalar outputs).  */
     fun backward(grad: Tensor? = null) {
         check(data.size == 1) { "backward() can only be called on scalar outputs" }
         // Seed grad with 1.0
@@ -185,6 +284,27 @@ class Tensor(
 
     override fun toString(): String {
         return "Tensor(data=${data.contentToString()}, shape=${shape.contentToString()}, requiresGrad=$requiresGrad)"
+    }
+
+    val string: String
+        get() {
+            return formatString()
+        }
+
+    private fun formatString(): String {
+        val sb = StringBuilder()
+        sb.append("Tensor(data=[\n")
+        for (i in data.indices) {
+            if (i % shape[shape.size - 1] == 0)
+                sb.append("[")
+            sb.append(data[i])
+            if (i != data.size - 1 && i % shape[shape.size - 1] != shape[shape.size - 1] - 1)
+                sb.append(", ")
+            if (i % shape[shape.size - 1] == shape[shape.size - 1] - 1)
+                sb.append("]\n")
+        }
+        sb.append("])")
+        return sb.toString()
     }
 
     fun clone(): Tensor {
@@ -201,5 +321,75 @@ class Tensor(
         return strides
     }
 
+    fun coerceIn(d: Double, maxNorm: Double) {
+        val norm = sqrt(data.sumOf { it * it })
+        if (norm > maxNorm) {
+            val scale = maxNorm / norm
+            for (i in data.indices) {
+                data[i] *= scale
+                if (abs(data[i]) < d)
+                    data[i] = 0.0
+                else
+                    data[i] = sign(data[i]) * d
+            }
+        }
+    }
+
+    fun sqrt(): Tensor {
+        return pow(0.5)
+    }
+
+    fun reciprocal(): Tensor {
+        return ReciprocalFunction.apply(this)
+    }
+
+    fun fill(value: Double): Tensor {
+        for (i in data.indices) {
+            data[i] = value
+        }
+        return this
+    }
+
+    fun flatten(): Tensor {
+        return FlattenFunction.apply(this)
+    }
+
+    fun softmax(axis: Int = -1): Tensor {
+        return SoftmaxFunction.apply(this, axis)
+    }
+
+    fun log(): Tensor {
+        return LogFunction.apply(this)
+    }
+
+    fun relu(): Tensor {
+        return ReLUFunction.apply(this)
+    }
+
+    fun reshape(vararg newShape: Int): Tensor {
+        val totalElements = this.data.size
+        var inferredShape = newShape
+
+        // 自动推导维度 -1
+        val negOneCount = newShape.count { it == -1 }
+        require(negOneCount <= 1) { "Only one dimension can be -1" }
+
+        if (negOneCount == 1) {
+            val knownProduct = newShape.filter { it != -1 }.fold(1) { acc, i -> acc * i }
+            require(totalElements % knownProduct == 0) {
+                "Cannot infer shape: total elements $totalElements not divisible by $knownProduct"
+            }
+            val inferred = totalElements / knownProduct
+            inferredShape = newShape.map { if (it == -1) inferred else it }.toIntArray()
+        }
+
+        // 验证新形状匹配
+        val expectedSize = inferredShape.fold(1) { acc, i -> acc * i }
+        require(expectedSize == totalElements) {
+            "Shape mismatch: expected $expectedSize elements, got $totalElements"
+        }
+
+        return Tensor(this.data.copyOf(), inferredShape, this.requiresGrad)
+    }
 }
 

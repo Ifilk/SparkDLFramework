@@ -1,5 +1,7 @@
 package xyz.ifilk.tensor
 
+import xyz.ifilk.utils.isScaler
+
 class AddFunction : TensorFunction() {
     companion object {
         fun apply(a: Tensor, b: Tensor): Tensor {
@@ -8,6 +10,10 @@ class AddFunction : TensorFunction() {
             val output = function.forward(a, b)
             function.attachCreator(output)
             return output
+        }
+
+        fun apply(a: Tensor, b: Double): Tensor {
+            return apply(a, Tensor(doubleArrayOf(b), intArrayOf(1), false))
         }
     }
 
@@ -41,7 +47,7 @@ class AddFunction : TensorFunction() {
                 }
             }
 
-            b.shape.isEmpty() -> {
+            b.isScaler() -> {
                 // Case 3: scalar broadcast
                 for (i in outputData.indices) {
                     outputData[i] = a.data[i] + b.data[0]
@@ -93,7 +99,7 @@ class AddFunction : TensorFunction() {
                 Tensor(data, b.shape)
             }
 
-            b.shape.isEmpty() -> {
+            b.isScaler() -> {
                 // Case 4: scalar broadcast
                 val sum = gradOutput.data.sum()
                 Tensor(doubleArrayOf(sum), intArrayOf(1))

@@ -9,8 +9,8 @@
 - [x] 支持基础Tensor操作和自动微分
 - [x] 实现Dense神经网络层
 - [x] 实现SGD和Adam优化器
-- [ ] 模拟NCCL集合通信接口
-- [ ] 提供类似torch.distributed的分布式训练能力
+- [x] Batch训练
+- [ ] Spark分布式训练
 - [ ] 支持数据并行和模型并行策略
 - [ ] MNIST手写数字识别完整实现
 - [ ] (可选)SafeTensor模型导出格式
