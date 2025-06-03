@@ -28,19 +28,7 @@
 
 ## 2. 架构设计
 
-### 2.1 整体架构
-
-```
-[Spark Cluster]
-├── [Driver] - 协调节点
-└── [Executor] - 工作节点
-    ├── Tensor Core
-    ├── Autograd Engine
-    ├── Distributed Communication
-    └── Parallel Training
-```
-
-### 2.2 模块设计
+### 2.1 模块设计
 
 核心模块
 
@@ -60,7 +48,7 @@
 - models: 定义网络结构（如两层 MLP），支持模型保存与加载。
 - utils: 通用工具类
 
-## 快速开始
+## 3. 快速开始
 1. 编译代码
 ```bash
 ./gradlew shadowJar
