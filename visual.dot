@@ -1,0 +1,99 @@
+                digraph computation_graph {
+                    rankdir="BT";
+                    node [shape=plaintext];
+                    node2031588185 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        <tr><td colspan="2">SumFunction</td></tr>
+    </table>
+>];
+node230526532 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[1, 10]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        <tr><td colspan="2">SoftmaxFunction</td></tr>
+    </table>
+>];
+node1370283822 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[1, 10]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        <tr><td colspan="2">AddFunction</td></tr>
+    </table>
+>];
+node1783966110 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[10]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        
+    </table>
+>];
+node790487766 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[1, 10]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        <tr><td colspan="2">MatmulFunction</td></tr>
+    </table>
+>];
+node1320388319 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[128, 10]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        
+    </table>
+>];
+node2035381640 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[1, 128]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        <tr><td colspan="2">ReLUFunction</td></tr>
+    </table>
+>];
+node973843173 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[1, 128]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        <tr><td colspan="2">AddFunction</td></tr>
+    </table>
+>];
+node2059461664 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[128]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        
+    </table>
+>];
+node680988889 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[1, 128]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        <tr><td colspan="2">MatmulFunction</td></tr>
+    </table>
+>];
+node1511574902 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[784, 128]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        
+    </table>
+>];
+node1034094674 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[1, 784]</b></td></tr>
+        <tr><td colspan="2">Grad</td></tr>
+        
+    </table>
+>];
+                    node230526532 -> node2031588185
+node1370283822 -> node230526532
+node790487766 -> node1370283822
+node1783966110 -> node1370283822
+node2035381640 -> node790487766
+node1320388319 -> node790487766
+node973843173 -> node2035381640
+node680988889 -> node973843173
+node2059461664 -> node973843173
+node1034094674 -> node680988889
+node1511574902 -> node680988889
+                }

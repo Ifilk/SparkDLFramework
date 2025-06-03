@@ -70,6 +70,8 @@ class TensorTest {
         val loss = c.sum()   // 简单起见，将输出所有元素求和作为标量损失
         loss.backward()
 
+        println(a.string)
+
         // 手动计算梯度：
         // dL/dA = dC/dA = 1 * B^T
         val expectedGradA = doubleArrayOf(
