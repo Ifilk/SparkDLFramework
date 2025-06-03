@@ -1,0 +1,75 @@
+                digraph computation_graph {
+                    rankdir="BT";
+                    node [shape=plaintext];
+                    node359742806 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[]</b></td></tr>
+        <tr><td colspan="2">No Grad</td></tr>
+        <tr><td colspan="2">MeanFunction</td></tr>
+    </table>
+>];
+node1633013890 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[4, 1]</b></td></tr>
+        <tr><td colspan="2">No Grad</td></tr>
+        <tr><td colspan="2">PowFunction</td></tr>
+    </table>
+>];
+node125844477 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[4, 1]</b></td></tr>
+        <tr><td colspan="2">No Grad</td></tr>
+        <tr><td colspan="2">SubtractFunction</td></tr>
+    </table>
+>];
+node1394557075 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[4, 1]</b></td></tr>
+        <tr><td colspan="2">No Grad</td></tr>
+        
+    </table>
+>];
+node1119622337 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[4, 1]</b></td></tr>
+        <tr><td colspan="2">No Grad</td></tr>
+        <tr><td colspan="2">AddFunction</td></tr>
+    </table>
+>];
+node1681303515 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[1]</b></td></tr>
+        <tr><td colspan="2">No Grad</td></tr>
+        
+    </table>
+>];
+node1659840424 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[4, 1]</b></td></tr>
+        <tr><td colspan="2">No Grad</td></tr>
+        <tr><td colspan="2">MatmulFunction</td></tr>
+    </table>
+>];
+node1866229258 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[1, 1]</b></td></tr>
+        <tr><td colspan="2">No Grad</td></tr>
+        
+    </table>
+>];
+node1175371136 [label=<
+    <table border="0" cellborder="1" cellspacing="0">
+        <tr><td colspan="2"><b>[4, 1]</b></td></tr>
+        <tr><td colspan="2">No Grad</td></tr>
+        
+    </table>
+>];
+                    node1633013890 -> node359742806
+node125844477 -> node1633013890
+node1119622337 -> node125844477
+node1394557075 -> node125844477
+node1659840424 -> node1119622337
+node1681303515 -> node1119622337
+node1175371136 -> node1659840424
+node1866229258 -> node1659840424
+                }
