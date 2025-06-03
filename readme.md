@@ -18,11 +18,11 @@
 
 ### 1.2 技术栈
 
-语言: Kotlin
+语言: Kotlin, Scala
 
 计算引擎: Apache Spark 3.x
 
-构建工具: Maven
+构建工具: Gradle
 
 测试框架: JUnit 5
 
